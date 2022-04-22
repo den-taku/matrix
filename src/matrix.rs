@@ -8,7 +8,7 @@ impl<const N: usize, const M: usize, T> Matrix<N, M, T> where [(); N * M]: {}
 impl<const N: usize, const M: usize, T> std::ops::Add for Matrix<N, M, T>
 where
     T: std::ops::AddAssign + Copy,
-    [T; N * M]: Clone,
+    [T; N * M]:,
 {
     type Output = Self;
     fn add(self, other: Self) -> Self::Output {
@@ -24,8 +24,8 @@ impl<const N: usize, const M: usize, const L: usize, T> std::ops::Mul<Matrix<M, 
     for Matrix<N, M, T>
 where
     T: std::ops::AddAssign + std::ops::Mul<Output = T> + Copy + num::traits::Zero,
-    [T; N * M]: Clone,
-    [T; M * L]: Clone,
+    [T; N * M]:,
+    [T; M * L]:,
     [T; N * L]:,
 {
     type Output = Matrix<N, L, T>;
