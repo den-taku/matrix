@@ -1,6 +1,6 @@
 # matrix
 
-matrix using const generics (only for nightly)
+Matrix using stack by definition with const generics (only for nightly)
 
 ```rust
     let left = Matrix::<2, 3, u32>([1, 2, 3, 4, 5, 6]);
