@@ -71,4 +71,17 @@ Matrix using stack by definition with const generics (only for nightly)
         matrix.transpose(),
         Matrix::<3, 4, u32>([1, 4, 7, 10, 2, 5, 8, 11, 3, 6, 9, 12])
     );
+
+    // Multidimensional Matrix
+    let multi_matrix = MultiMatrix::<2, 4, 3, u32>([
+        3, 4, 2, 1, //
+        4, 5, 4, 2, //
+        //
+        2, 3, 4, 2, //
+        7, 5, 7, 7, //
+        //
+        2, 2, 4, 6, //
+        7, 4, 6, 7, //
+    ]);
+    println!("{multi_matrix}");
 ```

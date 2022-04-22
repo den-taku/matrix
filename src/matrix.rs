@@ -1,3 +1,4 @@
+/// Matrix M[N x M]
 #[derive(Clone, Debug, PartialEq)]
 pub struct Matrix<const N: usize, const M: usize, T>(pub [T; N * M])
 where
@@ -294,8 +295,11 @@ where
     [T; N * M]:,
 {
     fn fmt(&self, dest: &mut std::fmt::Formatter) -> std::fmt::Result {
-        let mut string = "".to_string();
+        let mut string = "[ ".to_string();
         for i in 0..N {
+            if i != 0 {
+                string = format!("{}  ", string);
+            }
             for j in 0..M {
                 let pad = if self.0[i * M + j] >= T::zero() {
                     " ".to_string()
@@ -304,13 +308,13 @@ where
                 };
                 string = format!("{}{}{} ", string, pad, self.0[i * M + j].clone());
             }
-            string = format!("{}\n", string);
+            if i != N - 1 {
+                string = format!("{}\n", string);
+            } else {
+                string = format!("{}", string);
+            }
         }
-        write!(
-            dest,
-            "{}",
-            string.chars().take(string.len() - 1).collect::<String>()
-        )
+        write!(dest, "{}]", string)
     }
 }
 
