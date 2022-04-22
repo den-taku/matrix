@@ -49,4 +49,10 @@ fn main() {
     assert!((2.0 - x.0[1]).abs() < 1e-10);
     assert!((3.0 - x.0[2]).abs() < 1e-10);
     assert!((4.0 - x.0[3]).abs() < 1e-10);
+
+    let matrix = Matrix::<4, 3, u32>([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+    println!("{matrix}");
+    println!("↓");
+    let trans = matrix.transpose();
+    println!("{trans}");
 }

@@ -3,9 +3,32 @@ pub struct Matrix<const N: usize, const M: usize, T>(pub [T; N * M])
 where
     [T; N * M]:;
 
+impl<const N: usize, const M: usize, T: Copy> Matrix<N, M, T>
+where
+    [T; N * M]:,
+    [T; M * N]:,
+{
+    /// A^t
+    /// # Examples
+    /// ```
+    /// let matrix = Matrix::<4, 3, u32>([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+    /// assert_eq!(
+    ///     matrix.transpose(),
+    ///     Matrix::<3, 4, u32>([1, 4, 7, 10, 2, 5, 8, 11, 3, 6, 9, 12])
+    /// );
+    /// ```
+    pub fn transpose(self) -> Matrix<M, N, T> {
+        let mut matrix = [self.0[0]; M * N];
+        for (i, e) in self.0.into_iter().enumerate() {
+            matrix[(i % M) * N + i / M] = e;
+        }
+        Matrix(matrix)
+    }
+}
+
 impl<const N: usize, F: num::traits::Float> Matrix<N, N, F>
 where
-    [(); N * N]:,
+    [F; N * N]:,
 {
     /// LU decomposition
     /// # Examples
@@ -372,5 +395,20 @@ mod tests {
         assert!((2.0 - x.0[1]).abs() < 1e-10);
         assert!((3.0 - x.0[2]).abs() < 1e-10);
         assert!((4.0 - x.0[3]).abs() < 1e-10);
+    }
+
+    #[test]
+    fn for_transpose() {
+        let matrix = Matrix::<4, 2, u32>([3, 4, 2, 34, 5, 2, 3, 54]);
+        assert_eq!(
+            matrix.transpose(),
+            Matrix::<2, 4, u32>([3, 2, 5, 3, 4, 34, 2, 54])
+        );
+
+        let matrix = Matrix::<4, 3, u32>([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+        assert_eq!(
+            matrix.transpose(),
+            Matrix::<3, 4, u32>([1, 4, 7, 10, 2, 5, 8, 11, 3, 6, 9, 12])
+        );
     }
 }
