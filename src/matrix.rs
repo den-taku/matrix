@@ -125,6 +125,21 @@ where
     }
 }
 
+impl<const N: usize, const M: usize, T> std::ops::Mul<T> for Matrix<N, M, T>
+where
+    T: std::ops::MulAssign + Copy,
+    [T; N * M]:,
+{
+    type Output = Matrix<N, M, T>;
+    fn mul(self, other: T) -> Self::Output {
+        let mut new_matrix = self.0;
+        for e in new_matrix.iter_mut() {
+            *e *= other;
+        }
+        Matrix(new_matrix)
+    }
+}
+
 impl<const N: usize, const M: usize, T> std::ops::Neg for Matrix<N, M, T>
 where
     T: std::ops::Neg<Output = T> + Copy,
@@ -193,6 +208,16 @@ mod tests {
         let left = Matrix::<2, 3, u32>([3, 7, 2, 2, 4, 3]);
         let right = Matrix::<3, 3, u32>([2, 1, 4, 9, 2, 7, 8, 3, 2]);
         assert_eq!(left * right, Matrix::<2, 3, u32>([85, 23, 65, 64, 19, 42]));
+    }
+
+    #[test]
+    fn for_mul2() {
+        let left = Matrix::<3, 2, i32>([45, 34, 25, 21, 13, 12]);
+        let right = 3;
+        assert_eq!(
+            left * right,
+            Matrix::<3, 2, i32>([135, 102, 75, 63, 39, 36])
+        );
     }
 
     #[test]

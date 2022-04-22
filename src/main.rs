@@ -14,6 +14,11 @@ fn main() {
     let prd = left * right;
     println!("{prd}");
 
+    let left = Matrix::<3, 2, f32>([4.5, 3.4, 2.5, 2.1, 1.3, 1.2]);
+    let right = 3.0;
+    let prd = left * right;
+    println!("{prd}");
+
     let left = Matrix::<2, 3, i32>([1, 2, 3, 4, 5, 6]);
     let right = Matrix::<2, 3, i32>([1, 2, 3, 4, 5, 6]);
     let diff = left - right;

@@ -13,6 +13,13 @@ Matrix using stack by definition with const generics (only for nightly)
     let prd = left * right;
     assert_eq!(prd, Matrix::<2, 3, u32>([85, 23, 65, 64, 19, 42]));
 
+    let left = Matrix::<3, 2, i32>([45, 34, 25, 21, 13, 12]);
+    let right = 3;
+    assert_eq!(
+        left * right,
+        Matrix::<3, 2, i32>([135, 102, 75, 63, 39, 36])
+    );
+
     let left = Matrix::<2, 3, i32>([1, 2, 3, 4, 5, 6]);
     let right = Matrix::<2, 3, i32>([6, 5, 4, 3, 2, 1]);
     let diff = left - right;
