@@ -7,6 +7,16 @@ impl<const N: usize, F: num::traits::Float> Matrix<N, N, F>
 where
     [(); N * N]:,
 {
+    /// LU decomposition
+    /// # Examples
+    /// ```
+    /// let matrix = Matrix::<4, 4, f64>([
+    /// 2.0, 3.0, -4.0, 5.0, 1.0, 1.0, 1.0, 1.0, -1.0, 2.0, -3.0, 1.0, 1.0, 2.0, 3.0, -4.0,
+    /// ]);
+    /// let (l, u) = matrix.lu_decomposition();
+    ///
+    /// assert_eq!(l * u, matrix);
+    /// ```
     pub fn lu_decomposition(&self) -> (Self, Self) {
         let mut l = [F::zero(); N * N];
         let mut u = [F::zero(); N * N];
@@ -42,6 +52,20 @@ where
 /// Solve Ax = b
 /// A: N x N
 /// b: N
+/// # Examples
+///
+/// ```
+/// let a = Matrix::<4, 4, f64>([
+/// 2.0, 3.0, -4.0, 5.0, 1.0, 1.0, 1.0, 1.0, -1.0, 2.0, -3.0, 1.0, 1.0, 2.0, 3.0, -4.0,
+/// ]);
+/// let b = Matrix::<4, 1, f64>([16.0, 10.0, -2.0, -2.0]);
+/// let x = solve_eqn(a, b);
+///
+/// assert!((1.0 - x.0[0]).abs() < 1e-10);
+/// assert!((2.0 - x.0[1]).abs() < 1e-10);
+/// assert!((3.0 - x.0[2]).abs() < 1e-10);
+/// assert!((4.0 - x.0[3]).abs() < 1e-10);
+/// ```
 #[allow(clippy::identity_op)] // compiler cannot inference N + 1 = N
 pub fn solve_eqn<const N: usize, F>(a: Matrix<N, N, F>, b: Matrix<N, 1, F>) -> Matrix<N, 1, F>
 where
@@ -68,6 +92,21 @@ where
 /// Solve Ax = b
 /// A: N x N
 /// b: N
+///
+/// # Examples
+///
+/// ```
+/// let a = Matrix::<4, 4, f64>([
+/// 2.0, 3.0, -4.0, 5.0, 1.0, 1.0, 1.0, 1.0, -1.0, 2.0, -3.0, 1.0, 1.0, 2.0, 3.0, -4.0,
+/// ]);
+/// let b = Matrix::<4, 1, f64>([16.0, 10.0, -2.0, -2.0]);
+/// let x = solve_eqn_gauss(a, b);
+///
+/// assert!((1.0 - x.0[0]).abs() < 1e-10);
+/// assert!((2.0 - x.0[1]).abs() < 1e-10);
+/// assert!((3.0 - x.0[2]).abs() < 1e-10);
+/// assert!((4.0 - x.0[3]).abs() < 1e-10);
+/// ```
 #[allow(clippy::identity_op)] // compiler cannot inference N + 1 = N
 pub fn solve_eqn_gauss<const N: usize, F>(a: Matrix<N, N, F>, b: Matrix<N, 1, F>) -> Matrix<N, 1, F>
 where
