@@ -20,7 +20,7 @@ matrix using const generics (only for nightly)
 
     // 2a + 2b - 4c + 5d = 16
     //  a +  b +  c +  d = 10
-    // -a + 2b - 3c - 4d = -2
+    // -a + 2b - 3c -  d = -2
     //  a + 2b + 3c - 4d = -6
     //
     // (a, b, c, d) = (1, 2, 3, 4)
