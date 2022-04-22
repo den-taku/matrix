@@ -3,6 +3,68 @@ pub struct Matrix<const N: usize, const M: usize, T>(pub [T; N * M])
 where
     [T; N * M]:;
 
+impl<const N: usize, F: num::traits::Float> Matrix<N, N, F>
+where
+    [(); N * N]:,
+{
+    pub fn lu_decomposition(&self) -> (Self, Self) {
+        let mut l = [F::zero(); N * N];
+        let mut u = [F::zero(); N * N];
+
+        for i in 0..N {
+            l[i * N + i] = F::one();
+        }
+
+        let mut dec = self.0.clone();
+        for j in 0..N - 1 {
+            let w = F::one() / dec[j * N + j];
+            for i in j + 1..N {
+                dec[i * N + j] = w * dec[i * N + j];
+                for k in j + 1..N {
+                    dec[i * N + k] = dec[i * N + k] - dec[i * N + j] * dec[j * N + k];
+                }
+            }
+        }
+
+        for j in 0..N {
+            for i in 0..j + 1 {
+                u[i * N + j] = dec[i * N + j];
+            }
+            for i in j + 1..N {
+                l[i * N + j] = dec[i * N + j];
+            }
+        }
+
+        (Self(l), Self(u))
+    }
+}
+
+/// Solve Ax = b
+/// A: N x N
+/// b: N
+#[allow(clippy::identity_op)] // compiler cannot inference N + 1 = N
+pub fn solve_eqn<const N: usize, F>(a: Matrix<N, N, F>, b: Matrix<N, 1, F>) -> Matrix<N, 1, F>
+where
+    [F; N * N]:,
+    [F; N * 1]:,
+    F: num::traits::Float,
+{
+    let mut b = b.0;
+    let (l, u) = a.lu_decomposition();
+    for i in 0..N - 1 {
+        for j in i + 1..N {
+            b[j] = b[j] - l.0[j * N + i] * b[i]
+        }
+    }
+    for i in (0..N).rev() {
+        b[i] = b[i] / u.0[i * N + i];
+        for k in (0..i).rev() {
+            b[k] = b[k] - u.0[k * N + i] * b[i];
+        }
+    }
+    Matrix(b)
+}
+
 /// Solve Ax = b
 /// A: N x N
 /// b: N
@@ -85,8 +147,6 @@ where
     }
     b
 }
-
-impl<const N: usize, const M: usize, T> Matrix<N, M, T> where [(); N * M]: {}
 
 impl<const N: usize, const M: usize, T> std::ops::Add for Matrix<N, M, T>
 where
@@ -247,6 +307,28 @@ mod tests {
         ]);
         let b = Matrix::<4, 1, f64>([16.0, 10.0, -2.0, -2.0]);
         let x = solve_eqn_gauss(a, b);
+        assert!((1.0 - x.0[0]).abs() < 1e-10);
+        assert!((2.0 - x.0[1]).abs() < 1e-10);
+        assert!((3.0 - x.0[2]).abs() < 1e-10);
+        assert!((4.0 - x.0[3]).abs() < 1e-10);
+    }
+
+    #[test]
+    fn for_lu_decomposition() {
+        let matrix = Matrix::<4, 4, f64>([
+            2.0, 3.0, -4.0, 5.0, 1.0, 1.0, 1.0, 1.0, -1.0, 2.0, -3.0, 1.0, 1.0, 2.0, 3.0, -4.0,
+        ]);
+        let (l, u) = matrix.lu_decomposition();
+        assert_eq!(l * u, matrix);
+    }
+
+    #[test]
+    fn for_solve_eqn() {
+        let a = Matrix::<4, 4, f64>([
+            2.0, 3.0, -4.0, 5.0, 1.0, 1.0, 1.0, 1.0, -1.0, 2.0, -3.0, 1.0, 1.0, 2.0, 3.0, -4.0,
+        ]);
+        let b = Matrix::<4, 1, f64>([16.0, 10.0, -2.0, -2.0]);
+        let x = solve_eqn(a, b);
         assert!((1.0 - x.0[0]).abs() < 1e-10);
         assert!((2.0 - x.0[1]).abs() < 1e-10);
         assert!((3.0 - x.0[2]).abs() < 1e-10);

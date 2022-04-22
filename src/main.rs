@@ -30,4 +30,23 @@ fn main() {
     let b = Matrix::<4, 1, f64>([16.0, 10.0, -2.0, -2.0]);
     let x = solve_eqn_gauss(a, b);
     println!("{x}");
+
+    let matrix = Matrix::<4, 4, f64>([
+        2.0, 3.0, -4.0, 5.0, 1.0, 1.0, 1.0, 1.0, -1.0, 2.0, -3.0, 1.0, 1.0, 2.0, 3.0, -4.0,
+    ]);
+    let (l, u) = matrix.lu_decomposition();
+    println!("{l}");
+    println!("{u}");
+    println!("{}", l * u);
+
+    let a = Matrix::<4, 4, f64>([
+        2.0, 3.0, -4.0, 5.0, 1.0, 1.0, 1.0, 1.0, -1.0, 2.0, -3.0, 1.0, 1.0, 2.0, 3.0, -4.0,
+    ]);
+    let b = Matrix::<4, 1, f64>([16.0, 10.0, -2.0, -2.0]);
+    let x = solve_eqn(a, b);
+    println!("{x}");
+    assert!((1.0 - x.0[0]).abs() < 1e-10);
+    assert!((2.0 - x.0[1]).abs() < 1e-10);
+    assert!((3.0 - x.0[2]).abs() < 1e-10);
+    assert!((4.0 - x.0[3]).abs() < 1e-10);
 }
