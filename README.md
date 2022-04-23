@@ -1,5 +1,7 @@
 # matrix
 
+![gihub workflow status](https://github.com/den-taku/matrix/actions/workflows/on_merge.yml/badge.svg)
+
 Matrix using stack by definition with const generics (only for nightly)
 
 ```rust
