@@ -4,6 +4,25 @@ pub struct Matrix<const N: usize, const M: usize, T>(pub [T; N * M])
 where
     [T; N * M]:;
 
+impl<const N: usize, const M: usize, T> Matrix<N, M, T>
+where
+    [T; N * M]:,
+    T: Clone,
+{
+    pub fn map<U, F>(self, f: F) -> Matrix<N, M, U>
+    where
+        F: Fn(T) -> U,
+        [U; N * M]:,
+        U: Copy,
+    {
+        let mut new_matrix = [f(self.0[0].clone()); N * M];
+        for i in 1..N * M {
+            new_matrix[i] = f(self.0[i].clone());
+        }
+        Matrix(new_matrix)
+    }
+}
+
 impl<const N: usize, const M: usize, T: Copy> Matrix<N, M, T>
 where
     [T; N * M]:,
@@ -414,5 +433,31 @@ mod tests {
             matrix.transpose(),
             Matrix::<3, 4, u32>([1, 4, 7, 10, 2, 5, 8, 11, 3, 6, 9, 12])
         );
+    }
+
+    #[test]
+    fn for_lu_and_map() {
+        let matrix = Matrix::<10, 10, f64>([
+            3.4, 5.3, 2.4, 4.7, 7.89, 3.2, 3.5, 2.1324, 3.0, 3.4, //
+            1.4, 5.4, 2.4, 4.7, 7.89, 3.2, 4.5, 2.1324, 3.0, 3.4, //
+            2.4, 5.5, 2.4, 4.7, 7.89, 3.2, 2.5, 2.1324, 3.0, 3.4, //
+            3.4, 5.6, 2.4, 4.7, 7.89, 3.2, 4.5, 2.1324, 3.0, 3.4, //
+            3.4, 5.9, 2.4, 4.7, 7.89, 3.2, 5.5, 2.1324, 3.0, 3.4, //
+            5.4, 4.3, 2.4, 4.7, 7.89, 3.2, 4.5, 2.1324, 3.0, 3.4, //
+            6.4, 3.3, 2.4, 4.7, 7.89, 3.2, 7.5, 2.1324, 3.0, 3.4, //
+            7.4, 1.3, 2.4, 4.7, 7.89, 3.2, 9.5, 2.1324, 3.0, 3.4, //
+            8.4, 2.3, 2.4, 4.7, 7.89, 3.2, 4.5, 2.1324, 3.0, 3.4, //
+            9.4, 3.3, 2.4, 4.7, 7.89, 3.2, 1.5, 2.1324, 3.0, 3.4, //
+        ]);
+        let (l, u) = matrix.lu_decomposition();
+        let diff = matrix - l * u;
+        diff.map(|e| assert!(e.abs() < 1e-10));
+
+        let matrix = Matrix::<3, 4, i32>([
+            1, 2, 3, 4, //
+            5, 6, 7, 8, //
+            9, 10, 11, 12, //
+        ]);
+        assert_eq!(matrix.clone().map(|e| e * 2), matrix * 2);
     }
 }
