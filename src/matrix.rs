@@ -31,6 +31,8 @@ where
     /// A^t
     /// # Examples
     /// ```
+    /// use matrix::matrix::Matrix;
+    ///
     /// let matrix = Matrix::<4, 3, u32>([
     ///     1, 2, 3, //
     ///     4, 5, 6, //
@@ -62,6 +64,8 @@ where
     /// LU decomposition
     /// # Examples
     /// ```
+    /// use matrix::matrix::Matrix;
+    ///
     /// let matrix = Matrix::<4, 4, f64>([
     ///     2.0, 3.0, -4.0, 5.0, //
     ///     1.0, 1.0, 1.0, 1.0, //
@@ -110,6 +114,8 @@ where
 /// # Examples
 ///
 /// ```
+/// use matrix::matrix::{Matrix, solve_eqn};
+///
 /// let a = Matrix::<4, 4, f64>([
 ///     2.0, 3.0, -4.0, 5.0, //
 ///     1.0, 1.0, 1.0, 1.0, //
@@ -159,6 +165,8 @@ where
 /// # Examples
 ///
 /// ```
+/// use matrix::matrix::{Matrix, solve_eqn_gauss};
+///
 /// let a = Matrix::<4, 4, f64>([
 ///     2.0, 3.0, -4.0, 5.0, //
 ///     1.0, 1.0, 1.0, 1.0, //
@@ -166,7 +174,7 @@ where
 ///     1.0, 2.0, 3.0, -4.0,
 /// ]);
 /// let b = Matrix::<4, 1, f64>([
-///     16.0 //
+///     16.0, //
 ///     10.0, //
 ///     -2.0, //
 ///     -2.0
