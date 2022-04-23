@@ -16,8 +16,8 @@ where
         U: Copy,
     {
         let mut new_matrix = [f(self.0[0].clone()); N * M];
-        for i in 1..N * M {
-            new_matrix[i] = f(self.0[i].clone());
+        for (a, e) in new_matrix.iter_mut().zip(self.0.into_iter()).skip(1) {
+            *a = f(e)
         }
         Matrix(new_matrix)
     }
@@ -80,7 +80,7 @@ where
             l[i * N + i] = F::one();
         }
 
-        let mut dec = self.0.clone();
+        let mut dec = self.0;
         for j in 0..N - 1 {
             let w = F::one() / dec[j * N + j];
             for i in j + 1..N {
@@ -345,7 +345,7 @@ where
         let mut string = "[ ".to_string();
         for i in 0..N {
             if i != 0 {
-                string = format!("{}  ", string);
+                string.push_str("  ");
             }
             for j in 0..M {
                 let pad = if self.0[i * M + j] >= T::zero() {
@@ -356,9 +356,7 @@ where
                 string = format!("{}{}{} ", string, pad, self.0[i * M + j].clone());
             }
             if i != N - 1 {
-                string = format!("{}\n", string);
-            } else {
-                string = format!("{}", string);
+                string.push('\n');
             }
         }
         write!(dest, "{}]", string)
