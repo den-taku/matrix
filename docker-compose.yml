@@ -1,0 +1,13 @@
+version: '3.9'
+
+services:
+  runtime:
+    container_name: nightly
+    build:
+      dockerfile: docker/Dockerfile
+      context: .
+    volumes:
+      - type: bind
+        source: ./
+        target: /usr/src/matrix
+    tty: true

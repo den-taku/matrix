@@ -2,6 +2,13 @@
 
 Matrix using stack by definition with const generics (only for nightly)
 
+## Getting Started
+
+1. `docker compose up --detach`
+2. `docker container exec --interactive --tty nightly bash`
+
+## Examples
+
 ```rust
     // A + B
     let left = Matrix::<2, 3, u32>([
