@@ -7,6 +7,10 @@ Matrix using stack by definition with const generics (only for nightly)
 1. `docker compose up --detach`
 2. `docker container exec --interactive --tty nightly bash`
 
+## Test
+
+use `cargo nextest run` instead of `cargo test`
+
 ## Examples
 
 ```rust

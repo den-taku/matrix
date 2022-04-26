@@ -335,12 +335,16 @@ where
 
 impl<const N: usize, const M: usize, T> std::ops::Sub for Matrix<N, M, T>
 where
-    T: std::ops::AddAssign + Copy + std::ops::Neg<Output = T>,
+    T: std::ops::SubAssign + Copy,
     [T; N * M]:,
 {
     type Output = Self;
     fn sub(self, other: Self) -> Self::Output {
-        self + (-other)
+        let mut new_matrix = self.0;
+        for (left, right) in new_matrix.iter_mut().zip(other.0.iter()) {
+            *left -= *right
+        }
+        Self(new_matrix)
     }
 }
 
