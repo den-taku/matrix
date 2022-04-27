@@ -108,7 +108,7 @@ fn main() {
     let diff = matrix - l * u;
     diff.map::<_, _, [(); 10 * 10]>(|e| assert!(e.abs() < 1e-10));
 
-    // Solve Ax = b with Gaussian elimination
+    // Solve Ax = b with LU Decomposition
     //
     // 2a + 2b - 4c + 5d = 16
     //  a +  b +  c +  d = 10
