@@ -25,7 +25,7 @@ impl<const N: usize, const M: usize, T> Heaped<N, M, T>
 where
     [T; N * M]:,
 {
-    pub fn new(array: [T; N * M]) -> Self {
-        Self(Box::new(array))
+    pub fn new(boxed_array: Box<[T; N * M]>) -> Self {
+        Self(boxed_array)
     }
 }
