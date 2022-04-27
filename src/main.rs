@@ -127,7 +127,7 @@ fn main() {
     let diff = matrix - l * u;
     diff.map(|e| assert!(e.abs() < 1e-10));
 
-    let box_slice = matrix::heap::Heaped::<2, 3, i32>::new([1, 2, 3, 4, 5, 6]);
+    let box_slice = matrix::heap::Heaped::<2, 3, i32>::new(Box::new([1, 2, 3, 4, 5, 6]));
     let test = matrix::general_matrix::Matrix::<2, 3, _, i32>::new(box_slice);
     println!("{test}");
     let slice = [1, 2, 3, 4, 5, 6];
