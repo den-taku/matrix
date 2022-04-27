@@ -13,6 +13,7 @@ where
     }
 }
 
+#[allow(clippy::from_over_into)]
 impl<const N: usize, const M: usize, T> Into<[T; N * M]> for Heaped<N, M, T>
 where
     [T; N * M]:,
