@@ -9,12 +9,10 @@ pub struct Matrix<const N: usize, const M: usize, Array, T>(
     pub std::marker::PhantomData<T>,
 )
 where
-    [T; N * M]:,
     Array: Into<[T; N * M]> + Index<usize>;
 
 impl<const N: usize, const M: usize, Array, T> Matrix<N, M, Array, T>
 where
-    [T; N * M]:,
     Array: Into<[T; N * M]> + Index<usize>,
 {
     /// generate Matrix
@@ -25,7 +23,6 @@ where
 
 impl<const N: usize, const M: usize, Slice, T> Matrix<N, M, Slice, T>
 where
-    [T; N * M]:,
     Slice: Into<[T; N * M]> + Index<usize, Output = T>,
     T: Clone,
 {
@@ -51,7 +48,6 @@ where
     pub fn map<U, F, Array>(self, f: F) -> Matrix<N, M, Array, U>
     where
         F: Fn(T) -> U,
-        [U; N * M]:,
         U: Copy,
         Array: Into<[U; N * M]> + Index<usize> + From<[U; N * M]>,
     {
@@ -65,8 +61,6 @@ where
 
 impl<const N: usize, const M: usize, T: Copy> Matrix<N, M, [T; N * M], T>
 where
-    [T; N * M]:,
-    [T; M * N]:,
     [T; N * M]: Into<[T; N * M]> + Index<usize, Output = T>,
 {
     /// A^t
@@ -102,7 +96,6 @@ where
 
 impl<const N: usize, Slice, F: num::traits::Float> Matrix<N, N, Slice, F>
 where
-    [F; N * N]:,
     Slice: Into<[F; N * N]>
         + From<[F; N * N]>
         + Index<usize, Output = F>
@@ -202,8 +195,6 @@ pub fn solve_eqn<const N: usize, Slice, Vector, F>(
     b: Matrix<N, 1, Vector, F>,
 ) -> Matrix<N, 1, Vector, F>
 where
-    [F; N * N]:,
-    [F; N * 1]:,
     F: num::traits::Float,
     Slice: Into<[F; N * N]>
         + From<[F; N * N]>
@@ -231,7 +222,6 @@ where
 impl<const N: usize, const M: usize, Lhs, Rhs, T> std::ops::Add<Matrix<N, M, Rhs, T>>
     for Matrix<N, M, Lhs, T>
 where
-    [T; N * M]:,
     Lhs: Into<[T; N * M]> + From<[T; N * M]> + Index<usize>,
     Rhs: Into<[T; N * M]> + From<[T; N * M]> + Index<usize>,
     T: std::ops::AddAssign,
@@ -306,7 +296,6 @@ where
 
 impl<const N: usize, const M: usize, Lhs, T> std::ops::Add<T> for Matrix<N, M, Lhs, T>
 where
-    [T; N * M]:,
     Lhs: Into<[T; N * M]> + From<[T; N * M]> + Index<usize>,
     T: std::ops::AddAssign + Copy,
 {
@@ -325,7 +314,6 @@ impl<const N: usize, const M: usize, const L: usize, Rhs, T> std::ops::Mul<Matri
     for Matrix<N, M, [T; N * M], T>
 where
     [T; N * M]: Into<[T; N * M]> + From<[T; N * M]> + Index<usize, Output = T>,
-    [T; M * L]:,
     [T; N * L]:,
     Rhs: Into<[T; M * L]> + From<[T; M * L]> + Index<usize, Output = T>,
     T: std::ops::AddAssign + std::ops::Mul<Output = T> + Copy + num::traits::Zero,
@@ -373,7 +361,6 @@ where
 
 impl<const N: usize, const M: usize, Lhs, T> std::ops::Mul<T> for Matrix<N, M, Lhs, T>
 where
-    [T; N * M]:,
     Lhs: Into<[T; N * M]> + From<[T; N * M]> + Index<usize>,
     T: std::ops::MulAssign + Copy,
 {
@@ -391,8 +378,6 @@ where
 impl<const N: usize, const M: usize, const L: usize, Rhs, T> std::ops::Mul<Matrix<M, L, Rhs, T>>
     for Matrix<N, M, Heaped<N, M, T>, T>
 where
-    [T; N * M]:,
-    [T; M * L]:,
     [T; N * L]:,
     Heaped<N, M, T>: Into<[T; N * M]> + From<[T; N * M]> + Index<usize, Output = T>,
     Rhs: Into<[T; M * L]> + From<[T; M * L]> + Index<usize, Output = T>,
@@ -415,7 +400,6 @@ where
 
 impl<const N: usize, const M: usize, Slice, T> std::ops::Neg for Matrix<N, M, Slice, T>
 where
-    [T; N * M]:,
     Slice: Into<[T; N * M]>
         + From<[T; N * M]>
         + Index<usize, Output = T>
@@ -438,7 +422,6 @@ where
 impl<const N: usize, const M: usize, Lhs, Rhs, T> std::ops::Sub<Matrix<N, M, Rhs, T>>
     for Matrix<N, M, Lhs, T>
 where
-    [T; N * M]:,
     Lhs: Into<[T; N * M]> + From<[T; N * M]> + Index<usize>,
     Rhs: Into<[T; N * M]> + From<[T; N * M]> + Index<usize>,
     T: std::ops::SubAssign,
@@ -456,7 +439,6 @@ where
 
 impl<const N: usize, const M: usize, Lhs, T> std::ops::Sub<T> for Matrix<N, M, Lhs, T>
 where
-    [T; N * M]:,
     Lhs: Into<[T; N * M]> + From<[T; N * M]> + Index<usize>,
     T: std::ops::SubAssign + Copy,
 {
@@ -474,7 +456,6 @@ where
 impl<const N: usize, const M: usize, Array, T> std::fmt::Display for Matrix<N, M, Array, T>
 where
     T: std::fmt::Display + Copy + num::traits::Zero + PartialOrd,
-    [T; N * M]:,
     Array: Into<[T; N * M]> + Index<usize, Output = T>,
 {
     fn fmt(&self, dest: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -502,7 +483,6 @@ where
 impl<const N: usize, const M: usize, Lhs, Rhs, T> std::cmp::PartialEq<Matrix<N, M, Rhs, T>>
     for Matrix<N, M, Lhs, T>
 where
-    [T; N * M]:,
     Lhs: Into<[T; N * M]> + From<[T; N * M]> + Index<usize, Output = T>,
     Rhs: Into<[T; N * M]> + From<[T; N * M]> + Index<usize, Output = T>,
     T: std::cmp::PartialEq,
@@ -521,7 +501,6 @@ where
 
 impl<const N: usize, const M: usize, Array, T> std::ops::Index<usize> for Matrix<N, M, Array, T>
 where
-    [T; N * M]:,
     Array: Into<[T; N * M]> + Index<usize, Output = T>,
 {
     type Output = T;
