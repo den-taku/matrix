@@ -23,6 +23,43 @@ where
     }
 }
 
+impl<const N: usize, const M: usize, T: Copy> Matrix<N, M, [T; N * M], T>
+where
+    [T; N * M]:,
+    [T; M * N]:,
+    [T; N * M]: Into<[T; N * M]> + Index<usize, Output = T>,
+{
+    /// A^t
+    /// # Examples
+    /// ```
+    /// #![allow(incomplete_features)]
+    /// #![feature(generic_const_exprs)]
+    /// use matrix::matrix::Matrix;
+    ///
+    /// let matrix = Matrix::<4, 3, _, u32>::new([
+    ///     1, 2, 3, //
+    ///     4, 5, 6, //
+    ///     7, 8, 9, //
+    ///     10, 11, 12
+    /// ]);
+    /// assert_eq!(
+    ///     matrix.transpose(),
+    ///     Matrix::<3, 4, _, u32>::new([
+    ///         1, 4, 7, 10, //
+    ///         2, 5, 8, 11, //
+    ///         3, 6, 9, 12
+    ///     ])
+    /// );
+    /// ```
+    pub fn transpose(self) -> Matrix<M, N, [T; M * N], T> {
+        let mut matrix = [self.0[0]; M * N];
+        for (i, e) in self.0.into_iter().enumerate() {
+            matrix[(i % M) * N + i / M] = e;
+        }
+        Matrix::new(matrix)
+    }
+}
+
 impl<const N: usize, const M: usize, Lhs, Rhs, T> std::ops::Add<Matrix<N, M, Rhs, T>>
     for Matrix<N, M, Lhs, T>
 where
@@ -498,5 +535,28 @@ mod tests {
                 -1, 0, 1
             ])
         )
+    }
+
+    #[test]
+    fn for_transpose() {
+        let matrix = Matrix::<4, 2, _, u32>::new([
+            3, 4, //
+            2, 34, //
+            5, 2, //
+            3, 54,
+        ]);
+        assert_eq!(
+            matrix.transpose(),
+            Matrix::<2, 4, _, u32>::new([
+                3, 2, 5, 3, //
+                4, 34, 2, 54
+            ])
+        );
+
+        let matrix = Matrix::<4, 3, _, u32>::new([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+        assert_eq!(
+            matrix.transpose(),
+            Matrix::<3, 4, _, u32>::new([1, 4, 7, 10, 2, 5, 8, 11, 3, 6, 9, 12])
+        );
     }
 }
