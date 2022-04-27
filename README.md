@@ -1,6 +1,6 @@
 # matrix
 
-Statically sized matrix using const definition with const generics (only for nightly)
+Statically sized matrix using a definition with const generics (only for nightly)
 
 ## Getting Started
 
