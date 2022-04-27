@@ -1,48 +1,82 @@
-/// Matrix M[N x M]
-#[derive(Clone, Debug, PartialEq)]
-pub struct Matrix<const N: usize, const M: usize, T>(pub [T; N * M])
-where
-    [T; N * M]:;
+use crate::heap::Heaped;
+use std::convert::Into;
+use std::ops::{Index, IndexMut};
 
-impl<const N: usize, const M: usize, T> Matrix<N, M, T>
+/// Matrix M[N x M]
+#[derive(Clone, Debug)]
+pub struct Matrix<const N: usize, const M: usize, Array, T>(
+    pub Array,
+    pub std::marker::PhantomData<T>,
+)
 where
     [T; N * M]:,
+    Array: Into<[T; N * M]> + Index<usize>;
+
+impl<const N: usize, const M: usize, Array, T> Matrix<N, M, Array, T>
+where
+    [T; N * M]:,
+    Array: Into<[T; N * M]> + Index<usize>,
+{
+    /// generate Matrix
+    pub fn new(array: Array) -> Self {
+        Self(array, std::marker::PhantomData::<T>)
+    }
+}
+
+impl<const N: usize, const M: usize, Slice, T> Matrix<N, M, Slice, T>
+where
+    [T; N * M]:,
+    Slice: Into<[T; N * M]> + Index<usize, Output = T>,
     T: Clone,
 {
-    pub fn map<U, F>(self, f: F) -> Matrix<N, M, U>
+    /// Apply f to all value
+    ///
+    /// # Examples
+    /// ```
+    /// #![allow(incomplete_features)]
+    /// #![feature(generic_const_exprs)]
+    /// use matrix::matrix::Matrix;
+    ///
+    /// let matrix = Matrix::<4, 3, _, u32>::new([
+    ///    1, 2, 3, //
+    ///    4, 5, 6, //
+    ///    7, 8, 9, //
+    ///    10, 11, 12,
+    ///]);
+    ///assert_eq!(
+    ///    matrix.clone().map::<_, _, [u32; 4 * 3]>(|e| 2 * e),
+    ///    matrix * 2
+    ///)
+    /// ```
+    pub fn map<U, F, Array>(self, f: F) -> Matrix<N, M, Array, U>
     where
         F: Fn(T) -> U,
         [U; N * M]:,
         U: Copy,
+        Array: Into<[U; N * M]> + Index<usize> + From<[U; N * M]>,
     {
         let mut new_matrix = [f(self.0[0].clone()); N * M];
-        for (a, e) in new_matrix.iter_mut().zip(self.0.into_iter()).skip(1) {
+        for (a, e) in new_matrix.iter_mut().zip(self.0.into().into_iter()).skip(1) {
             *a = f(e)
         }
-        Matrix(new_matrix)
+        Matrix::new(Array::from(new_matrix))
     }
 }
 
-impl<const N: usize, const M: usize, T> Matrix<N, M, T>
-where
-    [T; N * M]:,
-{
-    pub fn new(array: [T; N * M]) -> Self {
-        Self(array)
-    }
-}
-
-impl<const N: usize, const M: usize, T: Copy> Matrix<N, M, T>
+impl<const N: usize, const M: usize, T: Copy> Matrix<N, M, [T; N * M], T>
 where
     [T; N * M]:,
     [T; M * N]:,
+    [T; N * M]: Into<[T; N * M]> + Index<usize, Output = T>,
 {
     /// A^t
     /// # Examples
     /// ```
+    /// #![allow(incomplete_features)]
+    /// #![feature(generic_const_exprs)]
     /// use matrix::matrix::Matrix;
     ///
-    /// let matrix = Matrix::<4, 3, u32>([
+    /// let matrix = Matrix::<4, 3, _, u32>::new([
     ///     1, 2, 3, //
     ///     4, 5, 6, //
     ///     7, 8, 9, //
@@ -50,32 +84,39 @@ where
     /// ]);
     /// assert_eq!(
     ///     matrix.transpose(),
-    ///     Matrix::<3, 4, u32>([
+    ///     Matrix::<3, 4, _, u32>::new([
     ///         1, 4, 7, 10, //
     ///         2, 5, 8, 11, //
     ///         3, 6, 9, 12
     ///     ])
     /// );
     /// ```
-    pub fn transpose(self) -> Matrix<M, N, T> {
+    pub fn transpose(self) -> Matrix<M, N, [T; M * N], T> {
         let mut matrix = [self.0[0]; M * N];
         for (i, e) in self.0.into_iter().enumerate() {
             matrix[(i % M) * N + i / M] = e;
         }
-        Matrix(matrix)
+        Matrix::new(matrix)
     }
 }
 
-impl<const N: usize, F: num::traits::Float> Matrix<N, N, F>
+impl<const N: usize, Slice, F: num::traits::Float> Matrix<N, N, Slice, F>
 where
     [F; N * N]:,
+    Slice: Into<[F; N * N]>
+        + From<[F; N * N]>
+        + Index<usize, Output = F>
+        + IndexMut<usize, Output = F>
+        + Clone,
 {
     /// LU decomposition
     /// # Examples
     /// ```
+    /// #![allow(incomplete_features)]
+    /// #![feature(generic_const_exprs)]
     /// use matrix::matrix::Matrix;
     ///
-    /// let matrix = Matrix::<4, 4, f64>([
+    /// let matrix = Matrix::<4, 4, _, f64>::new([
     ///     2.0, 3.0, -4.0, 5.0, //
     ///     1.0, 1.0, 1.0, 1.0, //
     ///     -1.0, 2.0, -3.0, 1.0, //
@@ -86,14 +127,14 @@ where
     /// assert_eq!(l * u, matrix);
     /// ```
     pub fn lu_decomposition(&self) -> (Self, Self) {
-        let mut l = [F::zero(); N * N];
-        let mut u = [F::zero(); N * N];
+        let mut l = Slice::from([F::zero(); N * N]);
+        let mut u = Slice::from([F::zero(); N * N]);
 
         for i in 0..N {
             l[i * N + i] = F::one();
         }
 
-        let mut dec = self.0;
+        let mut dec = self.0.clone();
         for j in 0..N - 1 {
             let w = F::one() / dec[j * N + j];
             for i in j + 1..N {
@@ -113,7 +154,7 @@ where
             }
         }
 
-        (Self(l), Self(u))
+        (Self::new(l), Self::new(u))
     }
 }
 
@@ -123,15 +164,17 @@ where
 /// # Examples
 ///
 /// ```
+/// #![allow(incomplete_features)]
+/// #![feature(generic_const_exprs)]
 /// use matrix::matrix::{Matrix, solve_eqn};
 ///
-/// let a = Matrix::<4, 4, f64>([
+/// let a = Matrix::<4, 4, _, f64>::new([
 ///     2.0, 3.0, -4.0, 5.0, //
 ///     1.0, 1.0, 1.0, 1.0, //
 ///     -1.0, 2.0, -3.0, 1.0, //
 ///     1.0, 2.0, 3.0, -4.0,
 /// ]);
-/// let b = Matrix::<4, 1, f64>([
+/// let b = Matrix::<4, 1, _, f64>::new([
 ///     16.0, //
 ///     10.0, //
 ///     -2.0, //
@@ -145,11 +188,20 @@ where
 /// assert!((4.0 - x.0[3]).abs() < 1e-10);
 /// ```
 #[allow(clippy::identity_op)] // compiler cannot inference N + 1 = N
-pub fn solve_eqn<const N: usize, F>(a: Matrix<N, N, F>, b: Matrix<N, 1, F>) -> Matrix<N, 1, F>
+pub fn solve_eqn<const N: usize, Slice, Vector, F>(
+    a: Matrix<N, N, Slice, F>,
+    b: Matrix<N, 1, Vector, F>,
+) -> Matrix<N, 1, Vector, F>
 where
     [F; N * N]:,
     [F; N * 1]:,
     F: num::traits::Float,
+    Slice: Into<[F; N * N]>
+        + From<[F; N * N]>
+        + Index<usize, Output = F>
+        + IndexMut<usize, Output = F>
+        + Clone,
+    Vector: Into<[F; N * 1]> + Index<usize, Output = F> + IndexMut<usize, Output = F>,
 {
     let mut b = b.0;
     let (l, u) = a.lu_decomposition();
@@ -164,142 +216,140 @@ where
             b[k] = b[k] - u.0[k * N + i] * b[i];
         }
     }
-    Matrix(b)
+    Matrix::new(b)
 }
 
-/// Solve Ax = b
-/// A: N x N
-/// b: N
-///
-/// # Examples
-///
-/// ```
-/// use matrix::matrix::{Matrix, solve_eqn_gauss};
-///
-/// let a = Matrix::<4, 4, f64>([
-///     2.0, 3.0, -4.0, 5.0, //
-///     1.0, 1.0, 1.0, 1.0, //
-///     -1.0, 2.0, -3.0, 1.0, //
-///     1.0, 2.0, 3.0, -4.0,
-/// ]);
-/// let b = Matrix::<4, 1, f64>([
-///     16.0, //
-///     10.0, //
-///     -2.0, //
-///     -2.0
-/// ]);
-/// let x = solve_eqn_gauss(a, b);
-///
-/// assert!((1.0 - x.0[0]).abs() < 1e-10);
-/// assert!((2.0 - x.0[1]).abs() < 1e-10);
-/// assert!((3.0 - x.0[2]).abs() < 1e-10);
-/// assert!((4.0 - x.0[3]).abs() < 1e-10);
-/// ```
-#[allow(clippy::identity_op)] // compiler cannot inference N + 1 = N
-pub fn solve_eqn_gauss<const N: usize, F>(a: Matrix<N, N, F>, b: Matrix<N, 1, F>) -> Matrix<N, 1, F>
+impl<const N: usize, const M: usize, Lhs, Rhs, T> std::ops::Add<Matrix<N, M, Rhs, T>>
+    for Matrix<N, M, Lhs, T>
 where
-    [F; N * N]:,
-    [F; N * 1]:,
-    F: num::traits::Float,
-{
-    backward_substitute(forward_erase(a, b))
-}
-
-#[allow(clippy::identity_op)] // compiler cannot inference N + 1 = N
-pub fn forward_erase<const N: usize, F>(
-    a: Matrix<N, N, F>,
-    b: Matrix<N, 1, F>,
-) -> (Matrix<N, N, F>, Matrix<N, 1, F>)
-where
-    [F; N * N]:,
-    [F; N * 1]:,
-    F: num::traits::Float,
-{
-    let a = a.0;
-    let b = b.0;
-    let mut v_a = vec![vec![F::zero(); N + 1]; N];
-    for (i, v) in v_a.iter_mut().enumerate() {
-        for j in 0..N {
-            v[j] = a[i * N + j];
-        }
-    }
-    for (v, e) in v_a.iter_mut().zip(b.iter()) {
-        v[N] = *e;
-    }
-    for i in 0..N {
-        let index = {
-            let mut v_tmp = Vec::new();
-            for (j, v) in v_a.iter().enumerate().take(N).skip(i) {
-                v_tmp.push((v[i], j));
-            }
-            v_tmp.sort_by(|a, b| a.partial_cmp(b).unwrap());
-            v_tmp.pop().unwrap().1
-        };
-        v_a.swap(i, index);
-        let a0 = v_a[i][i];
-        for j in i..N + 1 {
-            v_a[i][j] = v_a[i][j] / a0;
-        }
-        for k in i + 1..N {
-            let c = v_a[k][i];
-            for l in i..N + 1 {
-                v_a[k][l] = v_a[k][l] - c * v_a[i][l];
-            }
-        }
-    }
-    let mut new_a = a;
-    let mut new_b = b;
-    for i in 0..N {
-        for j in 0..N {
-            new_a[i * N + j] = v_a[i][j];
-        }
-        new_b[i] = v_a[i][N];
-    }
-    (Matrix(new_a), Matrix(new_b))
-}
-
-#[allow(clippy::identity_op)] // compiler cannot inference N + 1 = N
-pub fn backward_substitute<const N: usize, F>(
-    (a, mut b): (Matrix<N, N, F>, Matrix<N, 1, F>),
-) -> Matrix<N, 1, F>
-where
-    [F; N * N]:,
-    [F; N * 1]:,
-    F: num::traits::Float,
-{
-    for i in (0..N).rev() {
-        for j in 0..i {
-            b.0[j] = b.0[j] - a.0[j * N + i] * b.0[i];
-        }
-    }
-    b
-}
-
-impl<const N: usize, const M: usize, T> std::ops::Add for Matrix<N, M, T>
-where
-    T: std::ops::AddAssign + Copy,
     [T; N * M]:,
+    Lhs: Into<[T; N * M]> + From<[T; N * M]> + Index<usize>,
+    Rhs: Into<[T; N * M]> + From<[T; N * M]> + Index<usize>,
+    T: std::ops::AddAssign,
 {
     type Output = Self;
-    fn add(self, other: Self) -> Self::Output {
-        let mut new_matrix = self.0;
-        for (l, r) in new_matrix.iter_mut().zip(other.0.into_iter()) {
-            *l += r
+    /// A + B
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// #![allow(incomplete_features)]
+    /// #![feature(generic_const_exprs)]
+    /// use matrix::matrix::Matrix;
+    /// use matrix::heap::Heaped;
+    ///
+    /// let left = Matrix::<2, 3, _, i32>::new([
+    ///     1, 2, 3, //
+    ///     4, 5, 6,
+    /// ]);
+    /// let right = Matrix::<2, 3, _, i32>::new([
+    ///     1, 2, 3, //
+    ///     4, 5, 6,
+    /// ]);
+    /// assert_eq!(
+    ///     left + right,
+    ///     Matrix::<2, 3, _, i32>::new([
+    ///         2, 4, 6, //
+    ///         8, 10, 12
+    ///     ])
+    /// );
+    ///
+    /// let left = Matrix::<2, 3, _, _>::new(Heaped::<2, 3, i32>::new(Box::new([
+    ///     1, 2, 3, //
+    ///     4, 5, 6,
+    /// ])));
+    /// let right = Matrix::<2, 3, _, _>::new(Heaped::<2, 3, i32>::new(Box::new([
+    ///     1, 2, 3, //
+    ///     4, 5, 6,
+    /// ])));
+    /// assert_eq!(
+    ///     left + right,
+    ///     Matrix::<2, 3, _, i32>::new([
+    ///         2, 4, 6, //
+    ///         8, 10, 12
+    ///     ])
+    /// );
+    ///
+    /// let left = Matrix::<2, 3, _, _>::new(Heaped::<2, 3, i32>::new(Box::new([
+    ///     1, 2, 3, //
+    ///     4, 5, 6,
+    /// ])));
+    /// let right = Matrix::<2, 3, _, i32>::new([
+    ///     1, 2, 3, //
+    ///     4, 5, 6,
+    /// ]);
+    /// assert_eq!(
+    ///     left + right,
+    ///     Matrix::<2, 3, _, i32>::new([
+    ///         2, 4, 6, //
+    ///         8, 10, 12
+    ///     ])
+    /// );
+    /// ```
+    fn add(self, other: Matrix<N, M, Rhs, T>) -> Self::Output {
+        let mut new_matrix = self.0.into();
+        for (l, r) in new_matrix.iter_mut().zip(other.0.into().into_iter()) {
+            *l += r;
         }
-        Self(new_matrix)
+        Self::new(Lhs::from(new_matrix))
     }
 }
 
-impl<const N: usize, const M: usize, const L: usize, T> std::ops::Mul<Matrix<M, L, T>>
-    for Matrix<N, M, T>
+impl<const N: usize, const M: usize, Lhs, T> std::ops::Add<T> for Matrix<N, M, Lhs, T>
 where
-    T: std::ops::AddAssign + std::ops::Mul<Output = T> + Copy + num::traits::Zero,
     [T; N * M]:,
+    Lhs: Into<[T; N * M]> + From<[T; N * M]> + Index<usize>,
+    T: std::ops::AddAssign + Copy,
+{
+    type Output = Self;
+    /// A + k
+    fn add(self, other: T) -> Self::Output {
+        let mut new_matrix = self.0.into();
+        for l in new_matrix.iter_mut() {
+            *l += other;
+        }
+        Self::new(Lhs::from(new_matrix))
+    }
+}
+
+impl<const N: usize, const M: usize, const L: usize, Rhs, T> std::ops::Mul<Matrix<M, L, Rhs, T>>
+    for Matrix<N, M, [T; N * M], T>
+where
+    [T; N * M]: Into<[T; N * M]> + From<[T; N * M]> + Index<usize, Output = T>,
     [T; M * L]:,
     [T; N * L]:,
+    Rhs: Into<[T; M * L]> + From<[T; M * L]> + Index<usize, Output = T>,
+    T: std::ops::AddAssign + std::ops::Mul<Output = T> + Copy + num::traits::Zero,
 {
-    type Output = Matrix<N, L, T>;
-    fn mul(self, other: Matrix<M, L, T>) -> Self::Output {
+    type Output = Matrix<N, L, [T; N * L], T>;
+    /// A * B
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// #![allow(incomplete_features)]
+    /// #![feature(generic_const_exprs)]
+    /// use matrix::matrix::Matrix;
+    /// use matrix::heap::Heaped;
+    ///
+    /// let left = Matrix::<2, 3, _, i32>::new([
+    ///     3, 7, 2, //
+    ///     2, 4, 3,
+    /// ]);
+    /// let right = Matrix::<3, 3, _, i32>::new([
+    ///     2, 1, 4, //
+    ///     9, 2, 7, //
+    ///     8, 3, 2
+    /// ]);
+    /// assert_eq!(
+    ///     left * right,
+    ///     Matrix::<2, 3, _, i32>::new([
+    ///         85, 23, 65, //
+    ///         64, 19, 42
+    ///     ])
+    /// );
+    /// ```
+    fn mul(self, other: Matrix<M, L, Rhs, T>) -> Self::Output {
         let mut new_matrix = [T::zero(); N * L];
         for i in 0..N {
             for j in 0..L {
@@ -308,59 +358,115 @@ where
                 }
             }
         }
-        Matrix(new_matrix)
+        Matrix::new(new_matrix)
     }
 }
 
-impl<const N: usize, const M: usize, T> std::ops::Mul<T> for Matrix<N, M, T>
+impl<const N: usize, const M: usize, Lhs, T> std::ops::Mul<T> for Matrix<N, M, Lhs, T>
 where
+    [T; N * M]:,
+    Lhs: Into<[T; N * M]> + From<[T; N * M]> + Index<usize>,
     T: std::ops::MulAssign + Copy,
-    [T; N * M]:,
-{
-    type Output = Matrix<N, M, T>;
-    fn mul(self, other: T) -> Self::Output {
-        let mut new_matrix = self.0;
-        for e in new_matrix.iter_mut() {
-            *e *= other;
-        }
-        Matrix(new_matrix)
-    }
-}
-
-impl<const N: usize, const M: usize, T> std::ops::Neg for Matrix<N, M, T>
-where
-    T: std::ops::Neg<Output = T> + Copy,
-    [T; N * M]:,
 {
     type Output = Self;
+    /// A * k
+    fn mul(self, other: T) -> Self::Output {
+        let mut new_matrix = self.0.into();
+        for l in new_matrix.iter_mut() {
+            *l *= other;
+        }
+        Self::new(Lhs::from(new_matrix))
+    }
+}
+
+impl<const N: usize, const M: usize, const L: usize, Rhs, T> std::ops::Mul<Matrix<M, L, Rhs, T>>
+    for Matrix<N, M, Heaped<N, M, T>, T>
+where
+    [T; N * M]:,
+    [T; M * L]:,
+    [T; N * L]:,
+    Heaped<N, M, T>: Into<[T; N * M]> + From<[T; N * M]> + Index<usize, Output = T>,
+    Rhs: Into<[T; M * L]> + From<[T; M * L]> + Index<usize, Output = T>,
+    T: std::ops::AddAssign + std::ops::Mul<Output = T> + Copy + num::traits::Zero,
+{
+    type Output = Matrix<N, L, Heaped<N, L, T>, T>;
+    /// A * B
+    fn mul(self, other: Matrix<M, L, Rhs, T>) -> Self::Output {
+        let mut new_matrix = [T::zero(); N * L];
+        for i in 0..N {
+            for j in 0..L {
+                for k in 0..M {
+                    new_matrix[i * L + j] += self.0[i * M + k] * other.0[k * L + j];
+                }
+            }
+        }
+        Matrix::new(Heaped::new(Box::new(new_matrix)))
+    }
+}
+
+impl<const N: usize, const M: usize, Slice, T> std::ops::Neg for Matrix<N, M, Slice, T>
+where
+    [T; N * M]:,
+    Slice: Into<[T; N * M]>
+        + From<[T; N * M]>
+        + Index<usize, Output = T>
+        + IndexMut<usize, Output = T>,
+    T: std::ops::Neg<Output = T> + Copy,
+{
+    type Output = Self;
+    /// - A
     fn neg(self) -> Self::Output {
         let mut new_matrix = self.0;
-        for e in new_matrix.iter_mut() {
-            *e = -(*e);
+        for i in 0..N {
+            for j in 0..M {
+                new_matrix[i * M + j] = -new_matrix[i * M + j]
+            }
         }
-        Self(new_matrix)
+        Self::new(new_matrix)
     }
 }
 
-impl<const N: usize, const M: usize, T> std::ops::Sub for Matrix<N, M, T>
+impl<const N: usize, const M: usize, Lhs, Rhs, T> std::ops::Sub<Matrix<N, M, Rhs, T>>
+    for Matrix<N, M, Lhs, T>
 where
-    T: std::ops::SubAssign + Copy,
     [T; N * M]:,
+    Lhs: Into<[T; N * M]> + From<[T; N * M]> + Index<usize>,
+    Rhs: Into<[T; N * M]> + From<[T; N * M]> + Index<usize>,
+    T: std::ops::SubAssign,
 {
     type Output = Self;
-    fn sub(self, other: Self) -> Self::Output {
-        let mut new_matrix = self.0;
-        for (left, right) in new_matrix.iter_mut().zip(other.0.iter()) {
-            *left -= *right
+    /// A - B
+    fn sub(self, other: Matrix<N, M, Rhs, T>) -> Self::Output {
+        let mut new_matrix = self.0.into();
+        for (l, r) in new_matrix.iter_mut().zip(other.0.into().into_iter()) {
+            *l -= r;
         }
-        Self(new_matrix)
+        Self::new(Lhs::from(new_matrix))
     }
 }
 
-impl<const N: usize, const M: usize, T> std::fmt::Display for Matrix<N, M, T>
+impl<const N: usize, const M: usize, Lhs, T> std::ops::Sub<T> for Matrix<N, M, Lhs, T>
+where
+    [T; N * M]:,
+    Lhs: Into<[T; N * M]> + From<[T; N * M]> + Index<usize>,
+    T: std::ops::SubAssign + Copy,
+{
+    type Output = Self;
+    /// A - k
+    fn sub(self, other: T) -> Self::Output {
+        let mut new_matrix = self.0.into();
+        for l in new_matrix.iter_mut() {
+            *l -= other;
+        }
+        Self::new(Lhs::from(new_matrix))
+    }
+}
+
+impl<const N: usize, const M: usize, Array, T> std::fmt::Display for Matrix<N, M, Array, T>
 where
     T: std::fmt::Display + Copy + num::traits::Zero + PartialOrd,
     [T; N * M]:,
+    Array: Into<[T; N * M]> + Index<usize, Output = T>,
 {
     fn fmt(&self, dest: &mut std::fmt::Formatter) -> std::fmt::Result {
         let mut string = "[ ".to_string();
@@ -384,24 +490,87 @@ where
     }
 }
 
+impl<const N: usize, const M: usize, Lhs, Rhs, T> std::cmp::PartialEq<Matrix<N, M, Rhs, T>>
+    for Matrix<N, M, Lhs, T>
+where
+    [T; N * M]:,
+    Lhs: Into<[T; N * M]> + From<[T; N * M]> + Index<usize, Output = T>,
+    Rhs: Into<[T; N * M]> + From<[T; N * M]> + Index<usize, Output = T>,
+    T: std::cmp::PartialEq,
+{
+    fn eq(&self, other: &Matrix<N, M, Rhs, T>) -> bool {
+        for i in 0..N {
+            for j in 0..M {
+                if self[i * M + j] != other[i * M + j] {
+                    return false;
+                }
+            }
+        }
+        true
+    }
+}
+
+impl<const N: usize, const M: usize, Array, T> std::ops::Index<usize> for Matrix<N, M, Array, T>
+where
+    [T; N * M]:,
+    Array: Into<[T; N * M]> + Index<usize, Output = T>,
+{
+    type Output = T;
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.0[index]
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::heap::*;
 
     #[test]
     fn for_add() {
-        let left = Matrix::<2, 3, u32>([
+        let left = Matrix::<2, 3, _, i32>::new([
             1, 2, 3, //
             4, 5, 6,
         ]);
-        let right = Matrix::<2, 3, u32>([
+        let right = Matrix::<2, 3, _, i32>::new([
             1, 2, 3, //
             4, 5, 6,
         ]);
-        let sum = left + right;
         assert_eq!(
-            sum,
-            Matrix::<2, 3, u32>([
+            left + right,
+            Matrix::<2, 3, _, i32>::new([
+                2, 4, 6, //
+                8, 10, 12
+            ])
+        );
+
+        let left = Matrix::<2, 3, _, _>::new(Heaped::<2, 3, i32>::new(Box::new([
+            1, 2, 3, //
+            4, 5, 6,
+        ])));
+        let right = Matrix::<2, 3, _, _>::new(Heaped::<2, 3, i32>::new(Box::new([
+            1, 2, 3, //
+            4, 5, 6,
+        ])));
+        assert_eq!(
+            left + right,
+            Matrix::<2, 3, _, i32>::new([
+                2, 4, 6, //
+                8, 10, 12
+            ])
+        );
+
+        let left = Matrix::<2, 3, _, _>::new(Heaped::<2, 3, i32>::new(Box::new([
+            1, 2, 3, //
+            4, 5, 6,
+        ])));
+        let right = Matrix::<2, 3, _, i32>::new([
+            1, 2, 3, //
+            4, 5, 6,
+        ]);
+        assert_eq!(
+            left + right,
+            Matrix::<2, 3, _, i32>::new([
                 2, 4, 6, //
                 8, 10, 12
             ])
@@ -409,19 +578,52 @@ mod tests {
     }
 
     #[test]
+    fn for_add_scala() {
+        let left = Matrix::<2, 3, _, i32>::new([
+            1, 2, 3, //
+            4, 5, 6,
+        ]);
+        let right = 7;
+        assert_eq!(
+            left + right,
+            Matrix::<2, 3, _, i32>::new([
+                8, 9, 10, //
+                11, 12, 13
+            ])
+        );
+    }
+
+    #[test]
     fn for_mul() {
-        let left = Matrix::<2, 3, u32>([
+        let left = Matrix::<2, 3, _, u32>::new([
             3, 7, 2, //
             2, 4, 3,
         ]);
-        let right = Matrix::<3, 3, u32>([
+        let right = Matrix::<3, 3, _, u32>::new([
             2, 1, 4, //
             9, 2, 7, //
             8, 3, 2,
         ]);
         assert_eq!(
             left * right,
-            Matrix::<2, 3, u32>([
+            Matrix::<2, 3, _, u32>::new([
+                85, 23, 65, //
+                64, 19, 42
+            ])
+        );
+
+        let left = Matrix::<2, 3, _, u32>::new(Heaped::<2, 3, u32>::new(Box::new([
+            3, 7, 2, //
+            2, 4, 3,
+        ])));
+        let right = Matrix::<3, 3, _, u32>::new([
+            2, 1, 4, //
+            9, 2, 7, //
+            8, 3, 2,
+        ]);
+        assert_eq!(
+            left * right,
+            Matrix::<2, 3, _, u32>::new([
                 85, 23, 65, //
                 64, 19, 42
             ])
@@ -429,55 +631,49 @@ mod tests {
     }
 
     #[test]
-    fn for_mul2() {
-        let left = Matrix::<3, 2, i32>([
-            45, 34, //
-            25, 21, //
-            13, 12,
+    fn for_mul_scala() {
+        let left = Matrix::<2, 3, _, i32>::new([
+            1, 2, 3, //
+            4, 5, 6,
         ]);
-        let right = 3;
+        let right = 7;
         assert_eq!(
             left * right,
-            Matrix::<3, 2, i32>([
-                135, 102, //
-                75, 63, //
-                39, 36
+            Matrix::<2, 3, _, i32>::new([
+                7, 14, 21, //
+                28, 35, 42
             ])
         );
     }
 
     #[test]
     fn for_neg() {
-        let matrix = Matrix::<4, 2, i32>([
-            3, -2, //
-            -3, 0, //
-            0, 34, //
-            12, -1,
+        let matrix = Matrix::<2, 3, _, i32>::new([
+            1, 2, 3, //
+            4, 5, 6,
         ]);
         assert_eq!(
             -matrix,
-            Matrix::<4, 2, i32>([
-                -3, 2, //
-                3, 0, //
-                0, -34, //
-                -12, 1
+            Matrix::<2, 3, _, i32>::new([
+                -1, -2, -3, //
+                -4, -5, -6
             ])
         );
     }
 
     #[test]
     fn for_sub() {
-        let left = Matrix::<2, 3, i32>([
+        let left = Matrix::<2, 3, _, i32>::new([
             1, 2, 3, //
             4, 5, 6,
         ]);
-        let right = Matrix::<2, 3, i32>([
+        let right = Matrix::<2, 3, _, i32>::new([
             6, 5, 4, //
             3, 2, 1,
         ]);
         assert_eq!(
             left - right,
-            Matrix::<2, 3, i32>([
+            Matrix::<2, 3, _, i32>::new([
                 -5, -3, -1, //
                 1, 3, 5
             ])
@@ -485,69 +681,24 @@ mod tests {
     }
 
     #[test]
-    fn for_gauss() {
-        // 2a + 2b - 4c + 5d = 16
-        //  a +  b +  c +  d = 10
-        // -a + 2b - 3c -  d = -2
-        //  a + 2b + 3c - 4d = -2
-        //
-        // (a, b, c, d) = (1, 2, 3, 4)
-
-        let a = Matrix::<4, 4, f64>([
-            2.0, 3.0, -4.0, 5.0, //
-            1.0, 1.0, 1.0, 1.0, //
-            -1.0, 2.0, -3.0, 1.0, //
-            1.0, 2.0, 3.0, -4.0,
+    fn for_sub_scala() {
+        let left = Matrix::<2, 3, _, i32>::new([
+            1, 2, 3, //
+            4, 5, 6,
         ]);
-        let b = Matrix::<4, 1, f64>([
-            16.0, //
-            10.0, //
-            -2.0, //
-            -2.0,
-        ]);
-        let x = solve_eqn_gauss(a, b);
-        assert!((1.0 - x.0[0]).abs() < 1e-10);
-        assert!((2.0 - x.0[1]).abs() < 1e-10);
-        assert!((3.0 - x.0[2]).abs() < 1e-10);
-        assert!((4.0 - x.0[3]).abs() < 1e-10);
-    }
-
-    #[test]
-    fn for_lu_decomposition() {
-        let matrix = Matrix::<4, 4, f64>([
-            2.0, 3.0, -4.0, 5.0, //
-            1.0, 1.0, 1.0, 1.0, //
-            -1.0, 2.0, -3.0, 1.0, //
-            1.0, 2.0, 3.0, -4.0,
-        ]);
-        let (l, u) = matrix.lu_decomposition();
-        assert_eq!(l * u, matrix);
-    }
-
-    #[test]
-    fn for_solve_eqn() {
-        let a = Matrix::<4, 4, f64>([
-            2.0, 3.0, -4.0, 5.0, //
-            1.0, 1.0, 1.0, 1.0, //
-            -1.0, 2.0, -3.0, 1.0, //
-            1.0, 2.0, 3.0, -4.0,
-        ]);
-        let b = Matrix::<4, 1, f64>([
-            16.0, //
-            10.0, //
-            -2.0, //
-            -2.0,
-        ]);
-        let x = solve_eqn(a, b);
-        assert!((1.0 - x.0[0]).abs() < 1e-10);
-        assert!((2.0 - x.0[1]).abs() < 1e-10);
-        assert!((3.0 - x.0[2]).abs() < 1e-10);
-        assert!((4.0 - x.0[3]).abs() < 1e-10);
+        let right = 5;
+        assert_eq!(
+            left - right,
+            Matrix::<2, 3, _, i32>::new([
+                -4, -3, -2, //
+                -1, 0, 1
+            ])
+        )
     }
 
     #[test]
     fn for_transpose() {
-        let matrix = Matrix::<4, 2, u32>([
+        let matrix = Matrix::<4, 2, _, u32>::new([
             3, 4, //
             2, 34, //
             5, 2, //
@@ -555,22 +706,36 @@ mod tests {
         ]);
         assert_eq!(
             matrix.transpose(),
-            Matrix::<2, 4, u32>([
+            Matrix::<2, 4, _, u32>::new([
                 3, 2, 5, 3, //
                 4, 34, 2, 54
             ])
         );
 
-        let matrix = Matrix::<4, 3, u32>([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+        let matrix = Matrix::<4, 3, _, u32>::new([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
         assert_eq!(
             matrix.transpose(),
-            Matrix::<3, 4, u32>([1, 4, 7, 10, 2, 5, 8, 11, 3, 6, 9, 12])
+            Matrix::<3, 4, _, u32>::new([1, 4, 7, 10, 2, 5, 8, 11, 3, 6, 9, 12])
         );
     }
 
     #[test]
-    fn for_lu_and_map() {
-        let matrix = Matrix::<10, 10, f64>([
+    fn for_map() {
+        let matrix = Matrix::<4, 3, _, u32>::new([
+            1, 2, 3, //
+            4, 5, 6, //
+            7, 8, 9, //
+            10, 11, 12,
+        ]);
+        assert_eq!(
+            matrix.clone().map::<_, _, [u32; 4 * 3]>(|e| 2 * e),
+            matrix * 2
+        )
+    }
+
+    #[test]
+    fn for_lu_decomposition() {
+        let matrix = Matrix::<10, 10, _, f64>::new([
             3.4, 5.3, 2.4, 4.7, 7.89, 3.2, 3.5, 2.1324, 3.0, 3.4, //
             1.4, 5.4, 2.4, 4.7, 7.89, 3.2, 4.5, 2.1324, 3.0, 3.4, //
             2.4, 5.5, 2.4, 4.7, 7.89, 3.2, 2.5, 2.1324, 3.0, 3.4, //
@@ -584,13 +749,27 @@ mod tests {
         ]);
         let (l, u) = matrix.lu_decomposition();
         let diff = matrix - l * u;
-        diff.map(|e| assert!(e.abs() < 1e-10));
+        diff.map::<_, _, [(); 10 * 10]>(|e| assert!(e.abs() < 1e-10));
+    }
 
-        let matrix = Matrix::<3, 4, i32>([
-            1, 2, 3, 4, //
-            5, 6, 7, 8, //
-            9, 10, 11, 12, //
+    #[test]
+    fn for_solve_eqn() {
+        let a = Matrix::<4, 4, _, f64>::new([
+            2.0, 3.0, -4.0, 5.0, //
+            1.0, 1.0, 1.0, 1.0, //
+            -1.0, 2.0, -3.0, 1.0, //
+            1.0, 2.0, 3.0, -4.0,
         ]);
-        assert_eq!(matrix.clone().map(|e| e * 2), matrix * 2);
+        let b = Matrix::<4, 1, _, f64>::new([
+            16.0, //
+            10.0, //
+            -2.0, //
+            -2.0,
+        ]);
+        let x = solve_eqn(a, b);
+        assert!((1.0 - x.0[0]).abs() < 1e-10);
+        assert!((2.0 - x.0[1]).abs() < 1e-10);
+        assert!((3.0 - x.0[2]).abs() < 1e-10);
+        assert!((4.0 - x.0[3]).abs() < 1e-10);
     }
 }
