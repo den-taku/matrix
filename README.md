@@ -15,7 +15,7 @@ use `cargo nextest run` instead of `cargo test`
 
 ```rust
     // A + B
-    let left = Matrix::<2, 3, u32>([
+    let left = Matrix::<2, 3, u32>::new([
         1, 2, 3, //
         4, 5, 6
     ]);

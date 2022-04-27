@@ -23,6 +23,15 @@ where
     }
 }
 
+impl<const N: usize, const M: usize, T> Matrix<N, M, T>
+where
+    [T; N * M]:,
+{
+    pub fn new(array: [T; N * M]) -> Self {
+        Self(array)
+    }
+}
+
 impl<const N: usize, const M: usize, T: Copy> Matrix<N, M, T>
 where
     [T; N * M]:,
