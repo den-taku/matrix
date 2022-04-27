@@ -100,6 +100,125 @@ where
     }
 }
 
+impl<const N: usize, Slice, F: num::traits::Float> Matrix<N, N, Slice, F>
+where
+    [F; N * N]:,
+    Slice: Into<[F; N * N]>
+        + From<[F; N * N]>
+        + Index<usize, Output = F>
+        + IndexMut<usize, Output = F>
+        + Clone,
+{
+    /// LU decomposition
+    /// # Examples
+    /// ```
+    /// #![allow(incomplete_features)]
+    /// #![feature(generic_const_exprs)]
+    /// use matrix::matrix::Matrix;
+    ///
+    /// let matrix = Matrix::<4, 4, _, f64>::new([
+    ///     2.0, 3.0, -4.0, 5.0, //
+    ///     1.0, 1.0, 1.0, 1.0, //
+    ///     -1.0, 2.0, -3.0, 1.0, //
+    ///     1.0, 2.0, 3.0, -4.0,
+    /// ]);
+    /// let (l, u) = matrix.lu_decomposition();
+    ///
+    /// assert_eq!(l * u, matrix);
+    /// ```
+    pub fn lu_decomposition(&self) -> (Self, Self) {
+        let mut l = Slice::from([F::zero(); N * N]);
+        let mut u = Slice::from([F::zero(); N * N]);
+
+        for i in 0..N {
+            l[i * N + i] = F::one();
+        }
+
+        let mut dec = self.0.clone();
+        for j in 0..N - 1 {
+            let w = F::one() / dec[j * N + j];
+            for i in j + 1..N {
+                dec[i * N + j] = w * dec[i * N + j];
+                for k in j + 1..N {
+                    dec[i * N + k] = dec[i * N + k] - dec[i * N + j] * dec[j * N + k];
+                }
+            }
+        }
+
+        for j in 0..N {
+            for i in 0..j + 1 {
+                u[i * N + j] = dec[i * N + j];
+            }
+            for i in j + 1..N {
+                l[i * N + j] = dec[i * N + j];
+            }
+        }
+
+        (Self::new(l), Self::new(u))
+    }
+}
+
+/// Solve Ax = b
+/// A: N x N
+/// b: N
+/// # Examples
+///
+/// ```
+/// #![allow(incomplete_features)]
+/// #![feature(generic_const_exprs)]
+/// use matrix::matrix::{Matrix, solve_eqn};
+///
+/// let a = Matrix::<4, 4, _, f64>::new([
+///     2.0, 3.0, -4.0, 5.0, //
+///     1.0, 1.0, 1.0, 1.0, //
+///     -1.0, 2.0, -3.0, 1.0, //
+///     1.0, 2.0, 3.0, -4.0,
+/// ]);
+/// let b = Matrix::<4, 1, _, f64>::new([
+///     16.0, //
+///     10.0, //
+///     -2.0, //
+///     -2.0
+/// ]);
+/// let x = solve_eqn(a, b);
+///
+/// assert!((1.0 - x.0[0]).abs() < 1e-10);
+/// assert!((2.0 - x.0[1]).abs() < 1e-10);
+/// assert!((3.0 - x.0[2]).abs() < 1e-10);
+/// assert!((4.0 - x.0[3]).abs() < 1e-10);
+/// ```
+#[allow(clippy::identity_op)] // compiler cannot inference N + 1 = N
+pub fn solve_eqn<const N: usize, Slice, Vector, F>(
+    a: Matrix<N, N, Slice, F>,
+    b: Matrix<N, 1, Vector, F>,
+) -> Matrix<N, 1, Vector, F>
+where
+    [F; N * N]:,
+    [F; N * 1]:,
+    F: num::traits::Float,
+    Slice: Into<[F; N * N]>
+        + From<[F; N * N]>
+        + Index<usize, Output = F>
+        + IndexMut<usize, Output = F>
+        + Clone,
+    Vector: Into<[F; N * 1]> + Index<usize, Output = F> + IndexMut<usize, Output = F>,
+{
+    let mut b = b.0;
+    let (l, u) = a.lu_decomposition();
+    for i in 0..N - 1 {
+        for j in i + 1..N {
+            b[j] = b[j] - l.0[j * N + i] * b[i]
+        }
+    }
+    for i in (0..N).rev() {
+        b[i] = b[i] / u.0[i * N + i];
+        for k in (0..i).rev() {
+            b[k] = b[k] - u.0[k * N + i] * b[i];
+        }
+    }
+    Matrix::new(b)
+}
+
 impl<const N: usize, const M: usize, Lhs, Rhs, T> std::ops::Add<Matrix<N, M, Rhs, T>>
     for Matrix<N, M, Lhs, T>
 where
@@ -612,5 +731,45 @@ mod tests {
             matrix.clone().map::<_, _, [u32; 4 * 3]>(|e| 2 * e),
             matrix * 2
         )
+    }
+
+    #[test]
+    fn for_lu_decomposition() {
+        let matrix = Matrix::<10, 10, _, f64>::new([
+            3.4, 5.3, 2.4, 4.7, 7.89, 3.2, 3.5, 2.1324, 3.0, 3.4, //
+            1.4, 5.4, 2.4, 4.7, 7.89, 3.2, 4.5, 2.1324, 3.0, 3.4, //
+            2.4, 5.5, 2.4, 4.7, 7.89, 3.2, 2.5, 2.1324, 3.0, 3.4, //
+            3.4, 5.6, 2.4, 4.7, 7.89, 3.2, 4.5, 2.1324, 3.0, 3.4, //
+            3.4, 5.9, 2.4, 4.7, 7.89, 3.2, 5.5, 2.1324, 3.0, 3.4, //
+            5.4, 4.3, 2.4, 4.7, 7.89, 3.2, 4.5, 2.1324, 3.0, 3.4, //
+            6.4, 3.3, 2.4, 4.7, 7.89, 3.2, 7.5, 2.1324, 3.0, 3.4, //
+            7.4, 1.3, 2.4, 4.7, 7.89, 3.2, 9.5, 2.1324, 3.0, 3.4, //
+            8.4, 2.3, 2.4, 4.7, 7.89, 3.2, 4.5, 2.1324, 3.0, 3.4, //
+            9.4, 3.3, 2.4, 4.7, 7.89, 3.2, 1.5, 2.1324, 3.0, 3.4, //
+        ]);
+        let (l, u) = matrix.lu_decomposition();
+        let diff = matrix - l * u;
+        diff.map::<_, _, [(); 10 * 10]>(|e| assert!(e.abs() < 1e-10));
+    }
+
+    #[test]
+    fn for_solve_eqn() {
+        let a = Matrix::<4, 4, _, f64>::new([
+            2.0, 3.0, -4.0, 5.0, //
+            1.0, 1.0, 1.0, 1.0, //
+            -1.0, 2.0, -3.0, 1.0, //
+            1.0, 2.0, 3.0, -4.0,
+        ]);
+        let b = Matrix::<4, 1, _, f64>::new([
+            16.0, //
+            10.0, //
+            -2.0, //
+            -2.0,
+        ]);
+        let x = solve_eqn(a, b);
+        assert!((1.0 - x.0[0]).abs() < 1e-10);
+        assert!((2.0 - x.0[1]).abs() < 1e-10);
+        assert!((3.0 - x.0[2]).abs() < 1e-10);
+        assert!((4.0 - x.0[3]).abs() < 1e-10);
     }
 }
