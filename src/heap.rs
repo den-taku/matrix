@@ -1,3 +1,4 @@
+#[derive(Clone, Debug)]
 pub struct Heaped<const N: usize, const M: usize, T>(pub Box<[T; N * M]>)
 where
     [T; N * M]:;
@@ -18,6 +19,15 @@ where
 {
     fn into(self) -> [T; N * M] {
         *self.0
+    }
+}
+
+impl<const N: usize, const M: usize, T> From<[T; N * M]> for Heaped<N, M, T>
+where
+    [T; N * M]:,
+{
+    fn from(slice: [T; N * M]) -> Self {
+        Self::new(Box::new(slice))
     }
 }
 
