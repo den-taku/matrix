@@ -23,6 +23,46 @@ where
     }
 }
 
+impl<const N: usize, const M: usize, Slice, T> Matrix<N, M, Slice, T>
+where
+    [T; N * M]:,
+    Slice: Into<[T; N * M]> + Index<usize, Output = T>,
+    T: Clone,
+{
+    /// Apply f to all value
+    ///
+    /// # Examples
+    /// ```
+    /// #![allow(incomplete_features)]
+    /// #![feature(generic_const_exprs)]
+    /// use matrix::matrix::Matrix;
+    ///
+    /// let matrix = Matrix::<4, 3, _, u32>::new([
+    ///    1, 2, 3, //
+    ///    4, 5, 6, //
+    ///    7, 8, 9, //
+    ///    10, 11, 12,
+    ///]);
+    ///assert_eq!(
+    ///    matrix.clone().map::<_, _, [u32; 4 * 3]>(|e| 2 * e),
+    ///    matrix * 2
+    ///)
+    /// ```
+    pub fn map<U, F, Array>(self, f: F) -> Matrix<N, M, Array, U>
+    where
+        F: Fn(T) -> U,
+        [U; N * M]:,
+        U: Copy,
+        Array: Into<[U; N * M]> + Index<usize> + From<[U; N * M]>,
+    {
+        let mut new_matrix = [f(self.0[0].clone()); N * M];
+        for (a, e) in new_matrix.iter_mut().zip(self.0.into().into_iter()).skip(1) {
+            *a = f(e)
+        }
+        Matrix::new(Array::from(new_matrix))
+    }
+}
+
 impl<const N: usize, const M: usize, T: Copy> Matrix<N, M, [T; N * M], T>
 where
     [T; N * M]:,
@@ -558,5 +598,19 @@ mod tests {
             matrix.transpose(),
             Matrix::<3, 4, _, u32>::new([1, 4, 7, 10, 2, 5, 8, 11, 3, 6, 9, 12])
         );
+    }
+
+    #[test]
+    fn for_map() {
+        let matrix = Matrix::<4, 3, _, u32>::new([
+            1, 2, 3, //
+            4, 5, 6, //
+            7, 8, 9, //
+            10, 11, 12,
+        ]);
+        assert_eq!(
+            matrix.clone().map::<_, _, [u32; 4 * 3]>(|e| 2 * e),
+            matrix * 2
+        )
     }
 }
