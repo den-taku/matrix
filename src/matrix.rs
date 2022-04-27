@@ -168,6 +168,15 @@ where
 /// #![feature(generic_const_exprs)]
 /// use matrix::matrix::{Matrix, solve_eqn};
 ///
+/// // Solve Ax = b with LU Decomposition
+/// //
+/// // 2a + 2b - 4c + 5d = 16
+/// //  a +  b +  c +  d = 10
+/// // -a + 2b - 3c -  d = -2
+/// //  a + 2b + 3c - 4d = -2
+/// //
+/// // (a, b, c, d) = (1, 2, 3, 4)
+///
 /// let a = Matrix::<4, 4, _, f64>::new([
 ///     2.0, 3.0, -4.0, 5.0, //
 ///     1.0, 1.0, 1.0, 1.0, //
