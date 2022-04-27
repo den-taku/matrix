@@ -1,6 +1,6 @@
 use crate::heap::Heaped;
 use std::convert::Into;
-use std::ops::Index;
+use std::ops::{Index, IndexMut};
 
 /// Matrix M[N x M]
 #[derive(Clone, Debug)]
@@ -194,6 +194,7 @@ where
     T: std::ops::AddAssign + std::ops::Mul<Output = T> + Copy + num::traits::Zero,
 {
     type Output = Matrix<N, L, Heaped<N, L, T>, T>;
+    /// A * B
     fn mul(self, other: Matrix<M, L, Rhs, T>) -> Self::Output {
         let mut new_matrix = [T::zero(); N * L];
         for i in 0..N {
@@ -204,6 +205,64 @@ where
             }
         }
         Matrix::new(Heaped::new(Box::new(new_matrix)))
+    }
+}
+
+impl<const N: usize, const M: usize, Slice, T> std::ops::Neg for Matrix<N, M, Slice, T>
+where
+    [T; N * M]:,
+    Slice: Into<[T; N * M]>
+        + From<[T; N * M]>
+        + Index<usize, Output = T>
+        + IndexMut<usize, Output = T>,
+    T: std::ops::Neg<Output = T> + Copy,
+{
+    type Output = Self;
+    /// - A
+    fn neg(self) -> Self::Output {
+        let mut new_matrix = self.0;
+        for i in 0..N {
+            for j in 0..M {
+                new_matrix[i * M + j] = -new_matrix[i * M + j]
+            }
+        }
+        Self::new(new_matrix)
+    }
+}
+
+impl<const N: usize, const M: usize, Lhs, Rhs, T> std::ops::Sub<Matrix<N, M, Rhs, T>>
+    for Matrix<N, M, Lhs, T>
+where
+    [T; N * M]:,
+    Lhs: Into<[T; N * M]> + From<[T; N * M]> + Index<usize>,
+    Rhs: Into<[T; N * M]> + From<[T; N * M]> + Index<usize>,
+    T: std::ops::SubAssign,
+{
+    type Output = Self;
+    /// A - B
+    fn sub(self, other: Matrix<N, M, Rhs, T>) -> Self::Output {
+        let mut new_matrix = self.0.into();
+        for (l, r) in new_matrix.iter_mut().zip(other.0.into().into_iter()) {
+            *l -= r;
+        }
+        Self::new(Lhs::from(new_matrix))
+    }
+}
+
+impl<const N: usize, const M: usize, Lhs, T> std::ops::Sub<T> for Matrix<N, M, Lhs, T>
+where
+    [T; N * M]:,
+    Lhs: Into<[T; N * M]> + From<[T; N * M]> + Index<usize>,
+    T: std::ops::SubAssign + Copy,
+{
+    type Output = Self;
+    /// A - k
+    fn sub(self, other: T) -> Self::Output {
+        let mut new_matrix = self.0.into();
+        for l in new_matrix.iter_mut() {
+            *l -= other;
+        }
+        Self::new(Lhs::from(new_matrix))
     }
 }
 
@@ -389,5 +448,55 @@ mod tests {
                 28, 35, 42
             ])
         );
+    }
+
+    #[test]
+    fn for_neg() {
+        let matrix = Matrix::<2, 3, _, i32>::new([
+            1, 2, 3, //
+            4, 5, 6,
+        ]);
+        assert_eq!(
+            -matrix,
+            Matrix::<2, 3, _, i32>::new([
+                -1, -2, -3, //
+                -4, -5, -6
+            ])
+        );
+    }
+
+    #[test]
+    fn for_sub() {
+        let left = Matrix::<2, 3, _, i32>::new([
+            1, 2, 3, //
+            4, 5, 6,
+        ]);
+        let right = Matrix::<2, 3, _, i32>::new([
+            6, 5, 4, //
+            3, 2, 1,
+        ]);
+        assert_eq!(
+            left - right,
+            Matrix::<2, 3, _, i32>::new([
+                -5, -3, -1, //
+                1, 3, 5
+            ])
+        );
+    }
+
+    #[test]
+    fn for_sub_scala() {
+        let left = Matrix::<2, 3, _, i32>::new([
+            1, 2, 3, //
+            4, 5, 6,
+        ]);
+        let right = 5;
+        assert_eq!(
+            left - right,
+            Matrix::<2, 3, _, i32>::new([
+                -4, -3, -2, //
+                1, 0, 1
+            ])
+        )
     }
 }
