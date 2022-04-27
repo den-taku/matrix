@@ -757,6 +757,17 @@ mod tests {
             9.4, 3.3, 2.4, 4.7, 7.89, 3.2, 1.5, 2.1324, 3.0, 3.4, //
         ]);
         let (l, u) = matrix.lu_decomposition();
+        for i in 0..10 {
+            for j in 0..10 {
+                if i < j {
+                    assert!(l[i * 10 + j] == 0.0)
+                } else if i == j {
+                    assert!(l[i * 10 + j] == 1.0)
+                } else {
+                    assert!(u[i * 10 + j] == 0.0)
+                }
+            }
+        }
         let diff = matrix - l * u;
         diff.map::<_, _, [(); 10 * 10]>(|e| assert!(e.abs() < 1e-10));
     }
