@@ -1,6 +1,6 @@
 # matrix
 
-https://github.com/den-taku/matrix/actions/workflows/on_merge.yml/badge.svg
+![status](https://github.com/den-taku/matrix/actions/workflows/on_merge.yml/badge.svg)
 
 Statically sized matrix using a definition with const generics (only for nightly)
 
