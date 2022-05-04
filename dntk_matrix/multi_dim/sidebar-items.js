@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["MultiMatrix","Matrix [[N x M] x L]"]]});
