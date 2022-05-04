@@ -86,3 +86,23 @@ jobs:
             components: rustfmt, clippy
         - uses: Swatinem/rust-cache@v1
         - run: cargo doc
+
+  doc-pub:
+      runs-on: ubuntu-20.04
+      needs: [format, clippy, build, test, doc]
+      if: github.event_name == 'push' || github.event.pull_request,merged == true
+      steps:
+        - uses: actions/checkout@v2
+        - uses: actions-rs/toolchain@v1
+          with:
+            profile: minimal
+            override: true
+            toolchain: nightly
+            components: rustfmt, clippy
+        - uses: Swatinem/rust-cache@v1
+        - run: cargo doc --no-deps
+        - name: deploy
+          uses: peaceiris/actions-gh-pages@v3
+          with:
+            github_token: ${{ secrets.GITHUB_TOKEN }}
+            publish_dir: ./target/doc/
