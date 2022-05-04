@@ -1,6 +1,6 @@
 [package]
 name = "dntk-matrix"
-version = "0.1.0"
+version = "0.1.1"
 repository = "https://github.com/den-taku/matrix"
 description = "Statically sized matrix using a definition with const generics (only for nightly)"
 authors = ["DenTaku <dentaku1412@gmail.com>"]
