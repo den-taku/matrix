@@ -470,7 +470,7 @@ where
                 } else {
                     "".to_string()
                 };
-                string = format!("{}{}{} ", string, pad, self.0[i * M + j].clone());
+                string = format!("{}{}{} ", string, pad, self.0[i * M + j]);
             }
             if i != N - 1 {
                 string.push('\n');
