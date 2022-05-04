@@ -90,7 +90,7 @@ jobs:
   doc-pub:
       runs-on: ubuntu-20.04
       needs: [format, clippy, build, test, doc]
-      if: github.event_name == 'push' || github.event.pull_request,merged == true
+      if: github.event_name == 'push' || github.event.pull_request.merged == true
       steps:
         - uses: actions/checkout@v2
         - uses: actions-rs/toolchain@v1
