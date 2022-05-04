@@ -1,12 +1,13 @@
 [package]
 name = "dntk-matrix"
-version = "0.1.1"
+version = "0.1.2"
 repository = "https://github.com/den-taku/matrix"
 description = "Statically sized matrix using a definition with const generics (only for nightly)"
 authors = ["DenTaku <dentaku1412@gmail.com>"]
 edition = "2021"
 license = "MIT"
 readme = "README.md"
+documentation = "https://den-taku.github.io/matrix/dntk_matrix/"
 keywords = ["matrix"]
 
 [dependencies]
