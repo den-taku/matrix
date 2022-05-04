@@ -9,18 +9,14 @@ Statically sized matrix using a definition with const generics (only for nightly
 1. `docker compose up --detach`
 2. `docker container exec --interactive --tty nightly bash`
 
-## Test
-
-use `cargo nextest run` instead of `cargo test`
-
 ## Examples
 
 ```rust
 #![allow(incomplete_features)]
 #![feature(generic_const_exprs)]
 
-use matrix::heap::*;
-use matrix::matrix::*;
+use dntk_matrix::heap::*;
+use dntk_matrix::matrix::*;
 // use matrix::multi_dim::*;
 
 fn main() {
