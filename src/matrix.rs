@@ -32,7 +32,7 @@ where
     /// ```
     /// #![allow(incomplete_features)]
     /// #![feature(generic_const_exprs)]
-    /// use matrix::matrix::Matrix;
+    /// use dntk_matrix::matrix::Matrix;
     ///
     /// let matrix = Matrix::<4, 3, _, u32>::new([
     ///    1, 2, 3, //
@@ -68,7 +68,7 @@ where
     /// ```
     /// #![allow(incomplete_features)]
     /// #![feature(generic_const_exprs)]
-    /// use matrix::matrix::Matrix;
+    /// use dntk_matrix::matrix::Matrix;
     ///
     /// let matrix = Matrix::<4, 3, _, u32>::new([
     ///     1, 2, 3, //
@@ -107,7 +107,7 @@ where
     /// ```
     /// #![allow(incomplete_features)]
     /// #![feature(generic_const_exprs)]
-    /// use matrix::matrix::Matrix;
+    /// use dntk_matrix::matrix::Matrix;
     ///
     /// let matrix = Matrix::<4, 4, _, f64>::new([
     ///     2.0, 3.0, -4.0, 5.0, //
@@ -159,7 +159,7 @@ where
 /// ```
 /// #![allow(incomplete_features)]
 /// #![feature(generic_const_exprs)]
-/// use matrix::matrix::{Matrix, solve_eqn};
+/// use dntk_matrix::matrix::{Matrix, solve_eqn};
 ///
 /// // Solve Ax = b with LU Decomposition
 /// //
@@ -234,8 +234,8 @@ where
     /// ```rust
     /// #![allow(incomplete_features)]
     /// #![feature(generic_const_exprs)]
-    /// use matrix::matrix::Matrix;
-    /// use matrix::heap::Heaped;
+    /// use dntk_matrix::matrix::Matrix;
+    /// use dntk_matrix::heap::Heaped;
     ///
     /// let left = Matrix::<2, 3, _, i32>::new([
     ///     1, 2, 3, //
@@ -326,8 +326,8 @@ where
     /// ```rust
     /// #![allow(incomplete_features)]
     /// #![feature(generic_const_exprs)]
-    /// use matrix::matrix::Matrix;
-    /// use matrix::heap::Heaped;
+    /// use dntk_matrix::matrix::Matrix;
+    /// use dntk_matrix::heap::Heaped;
     ///
     /// let left = Matrix::<2, 3, _, i32>::new([
     ///     3, 7, 2, //

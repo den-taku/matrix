@@ -1,9 +1,8 @@
 #![allow(incomplete_features)]
 #![feature(generic_const_exprs)]
 
-use matrix::heap::*;
-use matrix::matrix::*;
-// use matrix::multi_dim::*;
+use dntk_matrix::heap::*;
+use dntk_matrix::matrix::*;
 
 fn main() {
     // A + B in stack

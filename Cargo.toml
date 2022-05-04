@@ -1,11 +1,16 @@
 [package]
-name = "matrix"
+name = "dntk-matrix"
 version = "0.1.0"
 repository = "https://github.com/den-taku/matrix"
 description = "Statically sized matrix using a definition with const generics (only for nightly)"
 authors = ["DenTaku <dentaku1412@gmail.com>"]
 edition = "2021"
+license = "MIT"
 readme = "README.md"
+keywords = ["matrix"]
+
+[badges]
+github = { repository = "den-taku/matrix", workflow = "on_merge" }
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
